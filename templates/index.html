@@ -1,0 +1,96 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Text File Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    </head>
+<body class="container">
+    <h1 class="my-4">Text File Editor</h1>
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" id="keyword" placeholder="キーワードを入力">
+        <button class="btn btn-primary" id="search">検索</button>
+    </div>
+    <div id="edit-section" class="mb-3" style="display: none;">
+        <h2>編集テキスト</h2>
+        <textarea class="form-control" id="edit-text" rows="10" style="width: 100%;"></textarea>
+        <button class="btn btn-success mt-2" id="edit-done">編集完了</button>
+    </div>
+    <div class="mb-3">
+        <h2>検索結果</h2>
+        <ul id="results" class="list-group"></ul>
+    </div>
+    <script>
+$("#search").on("click", function () {
+    const keyword = $("#keyword").val();
+    $.post("/search", { keyword: keyword }, function (data) {
+        const results = data;
+        $("#results").empty();
+        for (const result of results) {
+            const li = $("<li></li>")
+                .text(result.text)
+                .addClass("list-group-item")
+                .css("cursor", "pointer");
+            li.on("dblclick", function () {
+                $("#edit-text").val(result.text);
+                $("#edit-text").data("line-number", result.line_number);
+            });
+            $("#results").append(li);
+        }
+    }, "json");
+});
+
+$("#edit-done").on("click", function () {
+    const lineNumber = $("#edit-text").data("line-number");
+    const editedText = $("#edit-text").val();
+    $.post("/edit", { line_number: lineNumber, edited_text: editedText }, function () {
+        alert("編集が完了しました。");
+    });
+});
+
+function highlightKeyword(text, keyword) {
+    const regex = new RegExp(`(${keyword})`, "gi");
+    return text.replace(regex, "<mark>$1</mark>");
+}
+
+function performSearch() {
+    const keyword = $("#keyword").val();
+    $.post("/search", { keyword: keyword }, function (data) {
+        const results = data;
+        $("#results").empty();
+        for (const result of results) {
+            const highlightedText = highlightKeyword(result.text, keyword);
+            const li = $("<li></li>")
+                .html(highlightedText)
+                .addClass("list-group-item")
+                .css("cursor", "pointer");
+            li.on("dblclick", function () {
+                $("#edit-text").val(result.text);
+                $("#edit-text").data("line-number", result.line_number);
+            });
+            $("#results").append(li);
+        }
+    }, "json");
+}
+
+
+$("#search").on("click", performSearch);
+
+$("#keyword").on("keypress", function (event) {
+    if (event.which === 13) {
+        performSearch();
+    }
+});
+
+$("#results").on("dblclick", "li", function () {
+    $("#edit-section").show();
+});
+
+</script>
+</body> </html>
