@@ -2,6 +2,8 @@
 
 Text File Editor is a simple web application for searching keywords in a text file and editing the corresponding lines. It is built using Flask.
 
+※日本語のREADMEは下部にあります。
+
 ## Usage
 
 1. Run `app.py` to start the Flask server.
